@@ -85,42 +85,61 @@ def get_rule_function(rule_text):
         return BUILT_IN_RULES[rule_text]
 
     if rule_text.startswith("lambda"):
-        func = eval(rule_text)
-
-        if callable(func):
-            return func
-
-        # incorrectly formatted (or other issue)
-        print(f"Rule is not callable: {rule_text}")
-        sys.exit(1)
+        try:
+            return eval(rule_text)
+        except Exception:
+            print(f"Error: Invalid rule definition: {rule_text}")
+            sys.exit(1)
 
     # rule does not exist
     print(f"Unsupported rule: {rule_text}")
     sys.exit(1)
 
+def prepare_categories(categories):
+    """
+    Validate category entries from the config file and convert each rule
+    into a callable function.
+    Args: List of category dictionaries
+    Returns: A list of  category dictionaries with labels and callable functions.
+    """
+    prepared = []
+
+    for category in categories:
+        if "label" not in category:
+            print("Error: Each category must contain 'label'.")
+            sys.exit(1)
+
+        if "rule" not in category:
+            print("Error: Each category must contain 'rule'.")
+            sys.exit(1)
+
+        label = category["label"]
+        rule_text = category["rule"]
+        rule_func = get_rule_function(rule_text)
+
+        prepared.append({
+            "label": label,
+            "func": rule_func
+        })
+
+    return prepared
+
 def categorize_number(number, categories):
     """
     Determines which categories apply to a given number. 
-    Args: Number, List of dictionaries containing rules
+    Args: Number; List of dictionaries containing rules
     Returns: List of categories for given number
     """
     matched_labels = []
 
     for category in categories:
-        # confirm label & rule exist in config file
-        if "label" not in category:
-            print("Error: Config must contain 'label'.")
+        # catching errors such as dividing by 0
+        try:
+            if category["func"](number):
+                matched_labels.append(category["label"])
+        except Exception:
+            print(f"Error evaluating rule: {category['label']}")
             sys.exit(1)
-        if "rule" not in category:
-            print("Error: Config must contain 'rule'.")
-            sys.exit(1)
-        
-        label = category["label"]
-        rule_text = category["rule"]
-        rule_func = get_rule_function(rule_text)
-
-        if rule_func(number):
-            matched_labels.append(label)
 
     return matched_labels
 
@@ -129,6 +148,8 @@ def main():
     Prompts user for range and returns numbers followed by corresponding categories
     """
     categories = load_config("analyzer-config.json")
+    prepared_categories = prepare_categories(categories)
+
 
     try:
         start = int(input("Enter start of range: "))
@@ -142,7 +163,7 @@ def main():
         sys.exit(1)
 
     for number in range(start, end + 1):
-        labels = categorize_number(number, categories)
+        labels = categorize_number(number, prepared_categories)
         print(f"{number}: {', '.join(labels)}")
 
 
