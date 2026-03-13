@@ -1,7 +1,7 @@
 # Number Analyzer
 
 ## Author
-Sophie Clemens
+Sophie Clemens,
 March 13, 2026
 
 ## Description
