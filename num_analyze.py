@@ -12,10 +12,10 @@ a given set of properties and prints the results.
 import json
 import sys
 
-# Purpose: Determines if a number is prime by checking all divisors up to the 
-#          sq root of the given number. 
-# Input/output: Takes in a number, return True if prime, False if not prime
 def is_prime(n):
+    """
+    Determines if a number is prime. 
+    """
     if n < 2:
         return False
     
@@ -25,14 +25,16 @@ def is_prime(n):
     
     return True
 
-# Purpose: Determines if a number is even
-# Input/output: Takes in a number, return True if even, False if odd
 def is_even(n):
+    """
+    Determines if a number is even. 
+    """
     return n % 2 == 0
 
-# Purpose: Determines if a number is odd
-# Input/output: Takes in a number, return False if even, True if odd
 def is_odd(n):
+    """
+    Determines if a number is odd. 
+    """
     return n % 2 != 0
 
 
@@ -43,9 +45,20 @@ BUILT_IN_RULES = {
 }
 
 def load_config(filename):
+    """
+    Load the config file and check that it is formatted correctly.
+    Args: Config file
+    Returns: List of dictionaries containing rules
+    """
     try:
         with open(filename, "r") as file:
             config = json.load(file)
+
+            # confirm categories exists in config file
+            if "categories" not in config:
+                print("Error: Config must contain 'categories'.")
+                sys.exit(1)
+
             return config["categories"]
 
     except FileNotFoundError:
@@ -60,28 +73,48 @@ def load_config(filename):
         print(f"Unexpected error loading config: {e}")
         sys.exit(1)
 
-
 def get_rule_function(rule_text):
+    """
+    Fetch the rule function for a given string (either function definition or name of existing function)
+    Args: Rule name or definition
+    Returns: Rule function
+    """
+
+    # determine if function exists already (odd, even or prime)
     if rule_text in BUILT_IN_RULES:
         return BUILT_IN_RULES[rule_text]
 
     if rule_text.startswith("lambda"):
         func = eval(rule_text)
 
-        if not callable(func):
-            raise ValueError(f"Rule is not callable: {rule_text}")
+        if callable(func):
+            return func
 
-        return func
+        # incorrectly formatted (or other issue)
+        print(f"Rule is not callable: {rule_text}")
+        sys.exit(1)
 
-    raise ValueError(f"Unsupported rule: {rule_text}")
+    # rule does not exist
+    print(f"Unsupported rule: {rule_text}")
+    sys.exit(1)
 
-# Purpose: Determines which categories apply to a given number. 
-# Input/output: Takes in a number, returns list of categories that apply to
-#               the given number
 def categorize_number(number, categories):
+    """
+    Determines which categories apply to a given number. 
+    Args: Number, List of dictionaries containing rules
+    Returns: List of categories for given number
+    """
     matched_labels = []
 
     for category in categories:
+        # confirm label & rule exist in config file
+        if "label" not in category:
+            print("Error: Config must contain 'label'.")
+            sys.exit(1)
+        if "rule" not in category:
+            print("Error: Config must contain 'rule'.")
+            sys.exit(1)
+        
         label = category["label"]
         rule_text = category["rule"]
         rule_func = get_rule_function(rule_text)
@@ -91,20 +124,22 @@ def categorize_number(number, categories):
 
     return matched_labels
 
-# Purpose: Prompts the user for a range and prints categories for all numbers
-#          in the range
-# Input/output: None
 def main():
+    """
+    Prompts user for range and returns numbers followed by corresponding categories
+    """
     categories = load_config("analyzer-config.json")
-    
 
-    start = int(input("Enter start of range: "))
-    end = int(input("Enter end of range: "))
+    try:
+        start = int(input("Enter start of range: "))
+        end = int(input("Enter end of range: "))
+    except ValueError:
+        print("Error: Please enter valid integers for the range.")
+        sys.exit(1)
 
     if start > end:
-        print("The end of the range must be greater than the start of the range.")
-        return
-        # should the program return or prompt again?
+        print("Error: Start of range must be less than or equal to end of range.")
+        sys.exit(1)
 
     for number in range(start, end + 1):
         labels = categorize_number(number, categories)

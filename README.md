@@ -11,3 +11,5 @@ The results are printed to the console for each number in the specified range.
 
 ## How to Run
 python num_analyze.py
+
+
