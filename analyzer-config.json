@@ -6,7 +6,7 @@
         },
         {
         "label": "Prime",
-        "rule": "primes"
+        "rule": "prime"
         },
         {
         "label": "DivBy3",

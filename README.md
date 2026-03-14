@@ -12,4 +12,8 @@ The results are printed to the console for each number in the specified range.
 ## How to Run
 python num_analyze.py
 
+python -m unittest
+
+## Version 
+The number analysis program & unit testing framework are compatible with Python 3.11.8
 

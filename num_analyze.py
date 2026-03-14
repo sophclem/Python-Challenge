@@ -150,7 +150,6 @@ def main():
     categories = load_config("analyzer-config.json")
     prepared_categories = prepare_categories(categories)
 
-
     try:
         start = int(input("Enter start of range: "))
         end = int(input("Enter end of range: "))
